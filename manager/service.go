@@ -80,7 +80,10 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 	if operatorGroup2 == "" {
 		operatorGroup2 = "WireGuard Administrators"
 	}
-	operatorGroup2Sid, _, _, _ := windows.LookupSID("", operatorGroup2)
+	operatorGroup2Sid, _, accType, _ := windows.LookupSID("", operatorGroup2)
+	if operatorGroup2Sid != nil && accType != windows.SidTypeGroup {
+                operatorGroup2Sid = nil
+	}
 
 	startProcess := func(session uint32) {
 		defer func() {
@@ -109,8 +112,8 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 			if err == nil {
 				isOperator1 := false
 				isOperator2 := false
-				err1 error := nil
-				err2 error := nil
+				var err1 error = nil
+				var err2 error = nil
 				if operatorGroupSid != nil {
 					isOperator1, err1 = impersonationToken.IsMember(operatorGroupSid)
 				}
