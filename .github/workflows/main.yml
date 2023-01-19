@@ -17,22 +17,22 @@ jobs:
         ref: 0.5.3
 
     - name: build
-      run: cd wireguard-windows && build
+      run: .\build.bat
 
     - name: Artifact x86
       uses: actions/upload-artifact@v3
       with:
         name: artifact_windows_x86
-        path: .\wireguard-windows\x86\*
+        path: .\x86\*
 
     - name: Artifact amd64
       uses: actions/upload-artifact@v3
       with:
         name: artifact_windows_amd64
-        path: .\wireguard-windows\amd64\*
+        path: .\amd64\*
 
     - name: Artifact arm64
       uses: actions/upload-artifact@v3
       with:
         name: artifact_windows_arm64
-        path: .\wireguard-windows\arm64\*
+        path: .\arm64\*
