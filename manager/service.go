@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+	"syscall"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
@@ -76,6 +77,11 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 	procsLock := sync.Mutex{}
 	stoppingManager := false
 	operatorGroupSid, _ := windows.CreateWellKnownSid(windows.WinBuiltinNetworkConfigurationOperatorsSid)
+	operatorGroup2 := conf.AdminString("OperatorGroup")
+	if operatorGroup2 == "" {
+		operatorGroup2 = "WireGuard Administrators"
+	}
+	operatorGroup2Sid, _, _, _ := syscall.LookupSID("", operatorGroup2)
 
 	startProcess := func(session uint32) {
 		defer func() {
@@ -92,7 +98,7 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 		}
 		isAdmin := elevate.TokenIsElevatedOrElevatable(userToken)
 		isOperator := false
-		if !isAdmin && conf.AdminBool("LimitedOperatorUI") && operatorGroupSid != nil {
+		if !isAdmin && conf.AdminBool("LimitedOperatorUI") && (operatorGroupSid != nil || operatorGroup2Sid != nil) {
 			linkedToken, err := userToken.GetLinkedToken()
 			var impersonationToken windows.Token
 			if err == nil {
@@ -102,8 +108,17 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 				err = windows.DuplicateTokenEx(userToken, windows.TOKEN_QUERY, nil, windows.SecurityImpersonation, windows.TokenImpersonation, &impersonationToken)
 			}
 			if err == nil {
-				isOperator, err = impersonationToken.IsMember(operatorGroupSid)
-				isOperator = isOperator && err == nil
+				isOperator1 := false
+				isOperator2 := false
+				err1 := nil
+				err2 := nil
+				if operatorGroupSid != nil {
+					isOperator1, err1 = impersonationToken.IsMember(operatorGroupSid)
+				}
+				if operatorGroup2Sid != nil {
+					isOperator2, err2 = impersonationToken.IsMember(operatorGroup2Sid)
+				}
+				isOperator = (isOperator1 && err1 == nil) || (isOperator2 && err2 == nil)
 				impersonationToken.Close()
 			}
 		}

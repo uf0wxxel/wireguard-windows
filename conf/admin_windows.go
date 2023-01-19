@@ -34,3 +34,15 @@ func AdminBool(name string) bool {
 	}
 	return val != 0
 }
+
+func AdminString(name string) string {
+	key, err := openAdminKey()
+	if err != nil {
+		return ""
+	}
+	val, _, err := key.GetStringValue(name)
+	if err != nil {
+		return ""
+	}
+	return val
+}
