@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-	"syscall"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
@@ -81,7 +80,7 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 	if operatorGroup2 == "" {
 		operatorGroup2 = "WireGuard Administrators"
 	}
-	operatorGroup2Sid, _, _, _ := syscall.LookupSID("", operatorGroup2)
+	operatorGroup2Sid, _, _, _ := windows.LookupSID("", operatorGroup2)
 
 	startProcess := func(session uint32) {
 		defer func() {
@@ -110,8 +109,8 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 			if err == nil {
 				isOperator1 := false
 				isOperator2 := false
-				err1 := nil
-				err2 := nil
+				err1 error := nil
+				err2 error := nil
 				if operatorGroupSid != nil {
 					isOperator1, err1 = impersonationToken.IsMember(operatorGroupSid)
 				}
