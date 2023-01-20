@@ -136,9 +136,10 @@ namespace Tunnel
 
         public Ringlogger(string filename, string tag)
         {
-            var file = File.Open(filename, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete);
-            file.SetLength(Log.Bytes);
-            var mmap = MemoryMappedFile.CreateFromFile(file, null, 0, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
+            //var file = File.Open(filename, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete);
+            //file.SetLength(Log.Bytes);
+            //var mmap = MemoryMappedFile.CreateFromFile(file, null, 0, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
+            var mmap = MemoryMappedFile.CreateNew(null, Log.Bytes);
             var view = mmap.CreateViewAccessor(0, Log.Bytes, MemoryMappedFileAccess.ReadWrite);
             _log = new Log(view);
             if (_log.Magic != _log.ExpectedMagic)
