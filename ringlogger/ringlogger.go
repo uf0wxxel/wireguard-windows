@@ -7,12 +7,10 @@ package ringlogger
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"runtime"
 	"strconv"
-	"sync/atomic"
 	"time"
 	"unsafe"
 
