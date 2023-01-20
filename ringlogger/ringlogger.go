@@ -49,15 +49,10 @@ func NewRinglogger(filename, tag string) (*Ringlogger, error) {
 	if len(tag) > maxTagLength {
 		return nil, windows.ERROR_LABEL_TOO_LONG
 	}
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o600)
-	if err != nil {
-		return nil, err
-	}
-	err = file.Truncate(int64(unsafe.Sizeof(logMem{})))
-	if err != nil {
-		return nil, err
-	}
-	mapping, err := windows.CreateFileMapping(windows.Handle(file.Fd()), nil, windows.PAGE_READWRITE, 0, 0, nil)
+	fileSize := uint64(unsafe.Sizeof(logMem{}))
+	invalidHandle := uintptr(0)
+	invalidHandle--
+	mapping, err := windows.CreateFileMapping(windows.Handle(invalidHandle), nil, windows.PAGE_READWRITE, uint32(fileSize >> 32), uint32(fileSize & 0xffffffff), nil)
 	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
 		return nil, err
 	}
@@ -66,7 +61,6 @@ func NewRinglogger(filename, tag string) (*Ringlogger, error) {
 		windows.CloseHandle(mapping)
 		return nil, err
 	}
-	rl.file = file
 	return rl, nil
 }
 
@@ -236,7 +230,9 @@ func (rl *Ringlogger) Close() error {
 }
 
 func (rl *Ringlogger) ExportInheritableMappingHandle() (handleToClose windows.Handle, err error) {
-	handleToClose, err = windows.CreateFileMapping(windows.Handle(rl.file.Fd()), nil, windows.PAGE_READONLY, 0, 0, nil)
+	invalidHandle := uintptr(0)
+	invalidHandle--
+	handleToClose, err = windows.CreateFileMapping(windows.Handle(invalidHandle), nil, windows.PAGE_READONLY, 0, 0, nil)
 	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
 		return
 	}
