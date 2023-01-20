@@ -236,13 +236,3 @@ func (rl *Ringlogger) ExportInheritableMappingHandle() (handleToClose windows.Ha
 	err = windows.DuplicateHandle(currentProcessHandle, rl.mapping, currentProcessHandle, &handleToClose, windows.FILE_MAP_READ, true, 0)
 	return
 }
-
-func (rl *Ringlogger) ExportInheritableMappingFullAccessHandle() (handleToClose windows.Handle, err error) {
-	var currentProcessHandle windows.Handle
-	currentProcessHandle, err = windows.GetCurrentProcess()
-	if err != nil {
-		return
-	}
-	err = windows.DuplicateHandle(currentProcessHandle, rl.mapping, currentProcessHandle, &handleToClose, 0, true, windows.DUPLICATE_SAME_ACCESS)
-	return
-}

@@ -25,8 +25,7 @@ import (
 )
 
 type tunnelService struct {
-	Path      string
-	LogHandle string
+	Path string
 }
 
 func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
@@ -97,24 +96,16 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		log.Println("Shutting down")
 	}()
 
-	if service.LogHandle != "" {
-		err = ringlogger.InitGlobalLoggerFromHandle(service.LogHandle, "TUN")
-		if err != nil {
-			serviceError = services.ErrorRingloggerOpen
-			return
-		}
-	} else {
-		var logFile string
-		logFile, err = conf.LogFile(true)
-		if err != nil {
-			serviceError = services.ErrorRingloggerOpen
-			return
-		}
-		err = ringlogger.InitGlobalLogger(logFile, "TUN")
-		if err != nil {
-			serviceError = services.ErrorRingloggerOpen
-			return
-		}
+	var logFile string
+	logFile, err = conf.LogFile(true)
+	if err != nil {
+		serviceError = services.ErrorRingloggerOpen
+		return
+	}
+	err = ringlogger.InitGlobalLogger(logFile, "TUN")
+	if err != nil {
+		serviceError = services.ErrorRingloggerOpen
+		return
 	}
 
 	config, err = conf.LoadFromPath(service.Path)
@@ -256,7 +247,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 	}
 }
 
-func Run(confPath string, handleStr string) error {
+func Run(confPath string) error {
 	name, err := conf.NameFromPath(confPath)
 	if err != nil {
 		return err
@@ -265,5 +256,5 @@ func Run(confPath string, handleStr string) error {
 	if err != nil {
 		return err
 	}
-	return svc.Run(serviceName, &tunnelService{confPath, handleStr})
+	return svc.Run(serviceName, &tunnelService{confPath})
 }
