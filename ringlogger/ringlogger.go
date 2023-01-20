@@ -12,7 +12,6 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"sync/atomic"
 	"time"
 	"unsafe"
 
