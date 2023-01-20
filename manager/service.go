@@ -81,7 +81,7 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 		operatorGroup2 = "WireGuard Administrators"
 	}
 	operatorGroup2Sid, _, accType, _ := windows.LookupSID("", operatorGroup2)
-	if operatorGroup2Sid != nil && accType != windows.SidTypeGroup {
+	if operatorGroup2Sid != nil && accType != windows.SidTypeGroup && accType != windows.SidTypeAlias {
                 operatorGroup2Sid = nil
 	}
 
