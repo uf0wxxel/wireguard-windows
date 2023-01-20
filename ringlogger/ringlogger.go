@@ -50,7 +50,7 @@ func NewRinglogger(filename, tag string) (*Ringlogger, error) {
 		return nil, windows.ERROR_LABEL_TOO_LONG
 	}
 	fileSize := uint64(unsafe.Sizeof(logMem{}))
-	mapping, err := windows.CreateFileMapping(windows.Handle(windows.InvalidHandle), nil, windows.PAGE_READWRITE, uint32(fileSize >> 32), uint32(fileSize & 0xffffffff), nil)
+	mapping, err := windows.CreateFileMapping(windows.Handle(windows.InvalidHandle), nil, windows.PAGE_READWRITE, uint32(fileSize >> 32), uint32(fileSize & 0xffffffff), filename)
 	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
 		return nil, err
 	}
