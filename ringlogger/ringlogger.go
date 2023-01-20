@@ -230,7 +230,7 @@ func (rl *Ringlogger) Close() error {
 func (rl *Ringlogger) ExportInheritableMappingHandle() (handleToClose windows.Handle, err error) {
 	currentProcessHandle, err := windows.GetCurrentProcess()
 	if err != nil {
-		return nil, err
+		return handleToClose, err
 	}
 	err = windows.DuplicateHandle(currentProcessHandle, rl.mapping, currentProcessHandle, &handleToClose, windows.PAGE_READONLY, true, 0)
 	return handleToClose, err
