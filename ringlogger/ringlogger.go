@@ -110,7 +110,7 @@ func (rl *Ringlogger) Write(p []byte) (n int, err error) {
 }
 
 func (rl *Ringlogger) WriteWithTimestamp(p []byte, ts int64) (n int, err error) {
-	if rl.readOnly {
+	/*if rl.readOnly {
 		return 0, io.ErrShortWrite
 	}
 	ret := len(p)
@@ -147,7 +147,8 @@ func (rl *Ringlogger) WriteWithTimestamp(p []byte, ts int64) (n int, err error) 
 	line.line[0] = '['
 	atomic.StoreInt64(&line.timeNs, ts)
 
-	return ret, nil
+	return ret, nil*/
+	return len(p), nil
 }
 
 func (rl *Ringlogger) WriteTo(out io.Writer) (n int64, err error) {

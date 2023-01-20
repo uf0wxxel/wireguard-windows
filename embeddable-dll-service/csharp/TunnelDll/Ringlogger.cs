@@ -151,12 +151,12 @@ namespace Tunnel
 
         public void Write(string line)
         {
-            var time = UnixTimestamp.Now;
+            /*var time = UnixTimestamp.Now;
             var entry = _log[_log.InsertNextIndex() - 1];
             entry.Timestamp = UnixTimestamp.Empty;
             entry.Text = null;
             entry.Text = string.Format("[{0}] {1}", _tag, line.Trim());
-            entry.Timestamp = time;
+            entry.Timestamp = time;*/
         }
 
         public void WriteTo(TextWriter writer)
