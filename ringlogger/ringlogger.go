@@ -233,7 +233,7 @@ func (rl *Ringlogger) ExportInheritableMappingHandle() (handleToClose windows.Ha
 	if err != nil {
 		return
 	}
-	err = windows.DuplicateHandle(currentProcessHandle, rl.mapping, currentProcessHandle, &handleToClose, windows.PAGE_READONLY, true, 0)
+	err = windows.DuplicateHandle(currentProcessHandle, rl.mapping, currentProcessHandle, &handleToClose, windows.FILE_MAP_READ, true, 0)
 	if err != nil {
 		return
 	}
