@@ -27,6 +27,21 @@ func InitGlobalLogger(file, tag string) error {
 	return nil
 }
 
+func InitGlobalLoggerFromHandle(handleStr, tag string) error {
+	if Global != nil {
+		return nil
+	}
+	var err error
+	Global, err = NewRingloggerFromInheritedMappingHandle(handleStr, tag)
+	if err != nil {
+		return err
+	}
+	log.SetOutput(Global)
+	log.SetFlags(0)
+	overrideWrite = globalWrite
+	return nil
+}
+
 //go:linkname overrideWrite runtime.overrideWrite
 var overrideWrite func(fd uintptr, p unsafe.Pointer, n int32) int32
 

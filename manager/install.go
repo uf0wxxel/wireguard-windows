@@ -9,6 +9,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
+	"golang.zx2c4.com/wireguard/windows/ringlogger"
 )
 
 var cachedServiceManager *mgr.Mgr
@@ -167,7 +169,8 @@ func InstallTunnel(configPath string) error {
 		DisplayName:  "WireGuard Tunnel: " + name,
 		SidType:      windows.SERVICE_SID_TYPE_UNRESTRICTED,
 	}
-	service, err = m.CreateService(serviceName, path, config, "/tunnelservice", configPath)
+	logMapping, err := ringlogger.Global.ExportInheritableMappingFullAccessHandle()
+	service, err = m.CreateService(serviceName, path, config, "/tunnelservice", configPath, strconv.FormatUint(uint64(logMapping), 10))
 	if err != nil {
 		return err
 	}
@@ -231,7 +234,7 @@ func changeTunnelServiceConfigFilePath(name, oldPath, newPath string) {
 		return
 	}
 	args, err := windows.DecomposeCommandLine(config.BinaryPathName)
-	if err != nil || len(args) != 3 ||
+	if err != nil || (len(args) != 3 && len(args) != 4) ||
 		!strings.EqualFold(args[0], exePath) || args[1] != "/tunnelservice" || !strings.EqualFold(args[2], oldPath) {
 		err = nil
 		return
