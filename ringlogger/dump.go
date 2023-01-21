@@ -11,17 +11,18 @@ import (
 	"io"
 	"os"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
 
 func DumpTo(inPath string, out io.Writer, continuous bool) error {
-	file, err := os.Open(inPath)
+	fileSize := uint64(unsafe.Sizeof(logMem{}))
+	sharedName, err := windows.UTF16PtrFromString(inPath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	mapping, err := windows.CreateFileMapping(windows.Handle(file.Fd()), nil, windows.PAGE_READONLY, 0, 0, nil)
+	mapping, err := windows.CreateFileMapping(windows.Handle(windows.InvalidHandle), nil, windows.PAGE_READONLY, uint32(fileSize >> 32), uint32(fileSize & 0xffffffff), sharedName)
 	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
 		return err
 	}
