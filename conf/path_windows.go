@@ -130,6 +130,6 @@ func RootDirectory(create bool) (string, error) {
 }
 
 func LogFile(createRoot bool) (string, error) {
-	root := "WireGuard_"
-	return filepath.Join(root, "log"), nil
+	root := "Local\\WireGuard_"
+	return filepath.Join(root, "log.bin"), nil
 }
