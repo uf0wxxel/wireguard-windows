@@ -1233,7 +1233,7 @@ func blockDNS(except []netip.Addr, session uintptr, baseObjects *baseObjects, we
 func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjects, weight uint8) error {
 	storedPointers0 := make([]*wtFwpV4AddrAndMask, 0, len(bypass))
 	allowConditionsV4 := make([]wtFwpmFilterCondition0, 0, len(bypass))
-	for _, ip := range except {
+	for _, ip := range bypass {
 		if !ip.Addr().Is4() {
 			continue
 		}
@@ -1252,9 +1252,9 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		storedPointers0 = append(storedPointers0, &address)
 	}
 
-	storedPointers := make([]*wtFwpByteArray16, 0, len(bypass))
+	storedPointers := make([]*wtFwpV6AddrAndMask, 0, len(bypass))
 	allowConditionsV6 := make([]wtFwpmFilterCondition0, 0, len(bypass))
-	for _, ip := range except {
+	for _, ip := range bypass {
 		if !ip.Addr().Is6() {
 			continue
 		}
@@ -1273,7 +1273,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		storedPointers = append(storedPointers, &address)
 	}
 
-	filter = wtFwpmFilter0{
+	filter := wtFwpmFilter0{
 		providerKey:         &baseObjects.provider,
 		subLayerKey:         baseObjects.filters,
 		weight:              filterWeight(weight),
@@ -1284,7 +1284,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		},
 	}
 
-	filterID = uint64(0)
+	filterID := uint64(0)
 
 	//
 	// #5 Allow IPv4 outbound Bypass.
