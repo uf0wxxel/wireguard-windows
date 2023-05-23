@@ -11,6 +11,8 @@ import (
 	"net/netip"
 	"runtime"
 	"unsafe"
+	"log"
+	"strconv"
 
 	"golang.org/x/sys/windows"
 )
@@ -1231,12 +1233,15 @@ func blockDNS(except []netip.Addr, session uintptr, baseObjects *baseObjects, we
 }
 
 func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjects, weight uint8) error {
+	log.Println("Processing bypass ip addresses")
+
 	storedPointers0 := make([]*wtFwpV4AddrAndMask, 0, len(bypass))
 	allowConditionsV4 := make([]wtFwpmFilterCondition0, 0, len(bypass))
 	for _, ip := range bypass {
 		if !ip.Addr().Is4() {
 			continue
 		}
+		log.Println(ip.String() + " " + ip.Addr().String() + " " + strconv.Itoa(ip.Bits()))
 		if !ip.IsValid() || ip.Bits() == -1 {
 			return errors.New("invalid bypass address")
 		}
@@ -1261,6 +1266,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if !ip.Addr().Is6() {
 			continue
 		}
+		log.Println(ip.String() + " " + ip.Addr().String() + " " + strconv.Itoa(ip.Bits()))
 		if !ip.IsValid() || ip.Bits() == -1 {
 			return errors.New("invalid bypass address")
 		}
