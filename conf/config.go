@@ -45,6 +45,7 @@ type Interface struct {
 	MTU        uint16
 	DNS        []netip.Addr
 	DNSSearch  []string
+	Bypass     []netip.Prefix
 	PreUp      string
 	PostUp     string
 	PreDown    string
@@ -222,6 +223,19 @@ func (conf *Config) DeduplicateNetworkEntries() {
 		i++
 	}
 	conf.Interface.DNS = conf.Interface.DNS[:i]
+
+	m = make(map[string]bool, len(conf.Interface.Bypass))
+	i = 0
+	for _, addr := range conf.Interface.Bypass {
+		s := addr.String()
+		if m[s] {
+			continue
+		}
+		m[s] = true
+		conf.Interface.Bypass[i] = addr
+		i++
+	}
+	conf.Interface.Bypass = conf.Interface.Bypass[:i]
 
 	for _, peer := range conf.Peers {
 		m = make(map[string]bool, len(peer.AllowedIPs))

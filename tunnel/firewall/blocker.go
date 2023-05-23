@@ -101,7 +101,7 @@ func registerBaseObjects(session uintptr) (*baseObjects, error) {
 	return bo, nil
 }
 
-func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []netip.Addr) error {
+func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []netip.Addr, bypassAddrs []netip.Prefix) error {
 	if wfpSession != 0 {
 		return errors.New("The firewall has already been enabled")
 	}
@@ -124,6 +124,13 @@ func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []neti
 
 		if len(restrictToDNSServers) > 0 {
 			err = blockDNS(restrictToDNSServers, session, baseObjects, 15, 14)
+			if err != nil {
+				return wrapErr(err)
+			}
+		}
+
+		if len(bypassAddrs) > 0 {
+			err = permitBypass(bypassAddrs, session, baseObjects, 15)
 			if err != nil {
 				return wrapErr(err)
 			}

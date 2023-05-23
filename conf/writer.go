@@ -47,6 +47,14 @@ func (conf *Config) ToWgQuick() string {
 		output.WriteString(fmt.Sprintf("MTU = %d\n", conf.Interface.MTU))
 	}
 
+	if len(conf.Interface.Bypass) > 0 {
+		addrStrings := make([]string, len(conf.Interface.Bypass))
+		for i, address := range conf.Interface.Bypass {
+			addrStrings[i] = address.String()
+		}
+		output.WriteString(fmt.Sprintf("Bypass = %s\n", strings.Join(addrStrings[:], ", ")))
+	}
+
 	if len(conf.Interface.PreUp) > 0 {
 		output.WriteString(fmt.Sprintf("PreUp = %s\n", conf.Interface.PreUp))
 	}

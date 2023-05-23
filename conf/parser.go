@@ -244,6 +244,18 @@ func FromWgQuick(s, name string) (*Config, error) {
 						conf.Interface.DNS = append(conf.Interface.DNS, a)
 					}
 				}
+			case "bypass":
+				addresses, err := splitList(val)
+				if err != nil {
+					return nil, err
+				}
+				for _, address := range addresses {
+					a, err := parseIPCidr(address)
+					if err != nil {
+						return nil, err
+					}
+					conf.Interface.Bypass = append(conf.Interface.Bypass, a)
+				}
 			case "preup":
 				conf.Interface.PreUp = val
 			case "postup":
@@ -343,6 +355,7 @@ func FromDriverConfiguration(interfaze *driver.Interface, existingConfig *Config
 			DNS:       existingConfig.Interface.DNS,
 			DNSSearch: existingConfig.Interface.DNSSearch,
 			MTU:       existingConfig.Interface.MTU,
+			Bypass:    existingConfig.Interface.Bypass,
 			PreUp:     existingConfig.Interface.PreUp,
 			PostUp:    existingConfig.Interface.PostUp,
 			PreDown:   existingConfig.Interface.PreDown,
