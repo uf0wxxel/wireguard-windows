@@ -61,7 +61,8 @@ func filterWeight(weight uint8) wtFwpValue0 {
 }
 
 func wrapErr(err error) error {
-	if errno, ok := err.(syscall.Errno); !ok {
+	errno, ok := err.(syscall.Errno)
+	if !ok {
 		return err
 	}
 	_, file, line, ok := runtime.Caller(1)
