@@ -1291,7 +1291,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 
 	filterID := uint64(0)
 
-	if len(allowConditionsV4) > 0 {
+	/*if len(allowConditionsV4) > 0 {
 		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV4[0]))
 
 		//
@@ -1325,7 +1325,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if err != nil {
 			return wrapErr(err)
 		}
-	}
+	}*/
 
 	filter.numFilterConditions = uint32(len(allowConditionsV6))
 
