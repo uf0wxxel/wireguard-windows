@@ -145,7 +145,14 @@ startOver:
 
 func enableFirewall(conf *conf.Config, luid winipcfg.LUID) error {
 	doNotRestrict := true
-	if len(conf.Peers) == 1 && !conf.Interface.TableOff {
+	doNotBlockDNS := true
+	if conf.Interface.Restrict {
+		doNotRestrict = false
+	}
+	if conf.Interface.BlockDNS {
+		doNotBlockDNS = false
+	}
+	if doNotRestrict && len(conf.Peers) == 1 && !conf.Interface.TableOff {
 		for _, allowedip := range conf.Peers[0].AllowedIPs {
 			if allowedip.Bits() == 0 && allowedip == allowedip.Masked() {
 				doNotRestrict = false
@@ -154,5 +161,5 @@ func enableFirewall(conf *conf.Config, luid winipcfg.LUID) error {
 		}
 	}
 	log.Println("Enabling firewall rules")
-	return firewall.EnableFirewall(uint64(luid), doNotRestrict, conf.Interface.DNS, conf.Interface.Bypass)
+	return firewall.EnableFirewall(uint64(luid), doNotRestrict, doNotBlockDNS, conf.Interface.DNS, conf.Interface.Bypass, conf.Interface.Forbid)
 }

@@ -55,6 +55,14 @@ func (conf *Config) ToWgQuick() string {
 		output.WriteString(fmt.Sprintf("Bypass = %s\n", strings.Join(addrStrings[:], ", ")))
 	}
 
+	if len(conf.Interface.Forbid) > 0 {
+		addrStrings := make([]string, len(conf.Interface.Forbid))
+		for i, address := range conf.Interface.Forbid {
+			addrStrings[i] = address.String()
+		}
+		output.WriteString(fmt.Sprintf("Forbid = %s\n", strings.Join(addrStrings[:], ", ")))
+	}
+
 	if len(conf.Interface.PreUp) > 0 {
 		output.WriteString(fmt.Sprintf("PreUp = %s\n", conf.Interface.PreUp))
 	}
@@ -69,6 +77,12 @@ func (conf *Config) ToWgQuick() string {
 	}
 	if conf.Interface.TableOff {
 		output.WriteString("Table = off\n")
+	}
+	if conf.Interface.Restrict {
+		output.WriteString("Restrict = yes\n")
+	}
+	if conf.Interface.BlockDNS {
+		output.WriteString("BlockDNS = yes\n")
 	}
 
 	for _, peer := range conf.Peers {

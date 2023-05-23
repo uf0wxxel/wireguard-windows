@@ -118,6 +118,16 @@ func parseTableOff(s string) (bool, error) {
 	return false, err
 }
 
+func parseRestrict(s string) (bool, error) {
+	if s == "yes" || s == "true" {
+		return true, nil
+	} else if s == "no" || s == "false" {
+		return false, nil
+	}
+	n, err := strconv.ParseUint(s, 10, 32)
+	return n > 0, err
+}
+
 func parseKeyBase64(s string) (*Key, error) {
 	k, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
@@ -256,6 +266,18 @@ func FromWgQuick(s, name string) (*Config, error) {
 					}
 					conf.Interface.Bypass = append(conf.Interface.Bypass, a)
 				}
+			case "forbid":
+				addresses, err := splitList(val)
+				if err != nil {
+					return nil, err
+				}
+				for _, address := range addresses {
+					a, err := parseIPCidr(address)
+					if err != nil {
+						return nil, err
+					}
+					conf.Interface.Forbid = append(conf.Interface.Forbid, a)
+				}
 			case "preup":
 				conf.Interface.PreUp = val
 			case "postup":
@@ -270,6 +292,18 @@ func FromWgQuick(s, name string) (*Config, error) {
 					return nil, err
 				}
 				conf.Interface.TableOff = tableOff
+			case "restrict":
+				restrict, err := parseRestrict(val)
+				if err != nil {
+					return nil, err
+				}
+				conf.Interface.Restrict = restrict
+			case "blockdns":
+				blockDNS, err := parseRestrict(val)
+				if err != nil {
+					return nil, err
+				}
+				conf.Interface.BlockDNS = blockDNS
 			default:
 				return nil, &ParseError{l18n.Sprintf("Invalid key for [Interface] section"), key}
 			}
@@ -356,11 +390,14 @@ func FromDriverConfiguration(interfaze *driver.Interface, existingConfig *Config
 			DNSSearch: existingConfig.Interface.DNSSearch,
 			MTU:       existingConfig.Interface.MTU,
 			Bypass:    existingConfig.Interface.Bypass,
+			Forbid:    existingConfig.Interface.Forbid,
 			PreUp:     existingConfig.Interface.PreUp,
 			PostUp:    existingConfig.Interface.PostUp,
 			PreDown:   existingConfig.Interface.PreDown,
 			PostDown:  existingConfig.Interface.PostDown,
 			TableOff:  existingConfig.Interface.TableOff,
+			Restrict:  existingConfig.Interface.Restrict,
+			BlockDNS:  existingConfig.Interface.BlockDNS,
 		},
 	}
 	if interfaze.Flags&driver.InterfaceHasPrivateKey != 0 {

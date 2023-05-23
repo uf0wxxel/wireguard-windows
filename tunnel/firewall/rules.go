@@ -1237,11 +1237,16 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if !ip.Addr().Is4() {
 			continue
 		}
-		if !ip.IsValid() || ip.Bits() == -1 {
-			return errors.New("invalid bypass address")
-		}
 		maskBytes := make([]byte, 4)
-		binary.LittleEndian.PutUint32(maskBytes, uint32(ip.Bits()))
+		prefix := ip.Bits()
+		for i, _ := range maskBytes {
+			if prefix < 8 {
+				maskBytes[i] = byte(0xFF << (8 - prefix))
+				break
+			}
+			maskBytes[i] = 0xFF
+			prefix -= 8
+		}
 		address := wtFwpV4AddrAndMask{
 			addr: binary.BigEndian.Uint32(ip.Addr().AsSlice()),
 			mask: binary.BigEndian.Uint32(maskBytes),
@@ -1262,9 +1267,6 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 	for _, ip := range bypass {
 		if !ip.Addr().Is6() {
 			continue
-		}
-		if !ip.IsValid() || ip.Bits() == -1 {
-			return errors.New("invalid bypass address")
 		}
 		address := wtFwpV6AddrAndMask{
 			addr:         ([16]uint8)(ip.Addr().As16()),
@@ -1354,6 +1356,151 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		// #4 Allow IPv6 inbound Bypass.
 		//
 		displayData, err = createWtFwpmDisplayData0("Allow Bypass inbound (IPv6)", "")
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		filter.displayData = *displayData
+		filter.layerKey = cFWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6
+
+		err = fwpmFilterAdd0(session, &filter, 0, &filterID)
+		if err != nil {
+			return wrapErr(err)
+		}
+	}
+
+	runtime.KeepAlive(storedPointers0)
+	runtime.KeepAlive(storedPointers)
+
+	return nil
+}
+
+func blockForbid(forbid []netip.Prefix, session uintptr, baseObjects *baseObjects, weight uint8) error {
+	storedPointers0 := make([]*wtFwpV4AddrAndMask, 0, len(forbid))
+	denyConditionsV4 := make([]wtFwpmFilterCondition0, 0, len(forbid))
+	for _, ip := range forbid {
+		if !ip.Addr().Is4() {
+			continue
+		}
+		maskBytes := make([]byte, 4)
+		prefix := ip.Bits()
+		for i, _ := range maskBytes {
+			if prefix < 8 {
+				maskBytes[i] = byte(0xFF << (8 - prefix))
+				break
+			}
+			maskBytes[i] = 0xFF
+			prefix -= 8
+		}
+		address := wtFwpV4AddrAndMask{
+			addr: binary.BigEndian.Uint32(ip.Addr().AsSlice()),
+			mask: binary.BigEndian.Uint32(maskBytes),
+		}
+		denyConditionsV4 = append(denyConditionsV4, wtFwpmFilterCondition0{
+			fieldKey:  cFWPM_CONDITION_IP_REMOTE_ADDRESS,
+			matchType: cFWP_MATCH_EQUAL,
+			conditionValue: wtFwpConditionValue0{
+				_type: cFWP_V4_ADDR_MASK,
+				value: uintptr(unsafe.Pointer(&address)),
+			},
+		})
+		storedPointers0 = append(storedPointers0, &address)
+	}
+
+	storedPointers := make([]*wtFwpV6AddrAndMask, 0, len(forbid))
+	denyConditionsV6 := make([]wtFwpmFilterCondition0, 0, len(forbid))
+	for _, ip := range forbid {
+		if !ip.Addr().Is6() {
+			continue
+		}
+		address := wtFwpV6AddrAndMask{
+			addr:         ([16]uint8)(ip.Addr().As16()),
+			prefixLength: uint8(ip.Bits()),
+		}
+		denyConditionsV6 = append(denyConditionsV6, wtFwpmFilterCondition0{
+			fieldKey:  cFWPM_CONDITION_IP_REMOTE_ADDRESS,
+			matchType: cFWP_MATCH_EQUAL,
+			conditionValue: wtFwpConditionValue0{
+				_type: cFWP_V6_ADDR_MASK,
+				value: uintptr(unsafe.Pointer(&address)),
+			},
+		})
+		storedPointers = append(storedPointers, &address)
+	}
+
+	filter := wtFwpmFilter0{
+		providerKey:         &baseObjects.provider,
+		subLayerKey:         baseObjects.filters,
+		weight:              filterWeight(weight),
+		numFilterConditions: uint32(len(denyConditionsV4)),
+		action: wtFwpmAction0{
+			_type: cFWP_ACTION_BLOCK,
+		},
+	}
+
+	filterID := uint64(0)
+
+	if len(denyConditionsV4) > 0 {
+		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&denyConditionsV4[0]))
+
+		//
+		// #1 Block IPv4 outbound forbid.
+		//
+		displayData, err := createWtFwpmDisplayData0("Block forbid outbound (IPv4)", "")
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		filter.displayData = *displayData
+		filter.layerKey = cFWPM_LAYER_ALE_AUTH_CONNECT_V4
+
+		err = fwpmFilterAdd0(session, &filter, 0, &filterID)
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		//
+		// #2 Block IPv4 inbound forbid.
+		//
+		displayData, err = createWtFwpmDisplayData0("Block forbid inbound (IPv4)", "")
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		filter.displayData = *displayData
+		filter.layerKey = cFWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4
+
+		err = fwpmFilterAdd0(session, &filter, 0, &filterID)
+		if err != nil {
+			return wrapErr(err)
+		}
+	}
+
+	filter.numFilterConditions = uint32(len(denyConditionsV6))
+
+	if len(denyConditionsV6) > 0 {
+		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&denyConditionsV6[0]))
+
+		//
+		// #3 Block IPv6 outbound forbid.
+		//
+		displayData, err := createWtFwpmDisplayData0("Block forbid outbound (IPv6)", "")
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		filter.displayData = *displayData
+		filter.layerKey = cFWPM_LAYER_ALE_AUTH_CONNECT_V6
+
+		err = fwpmFilterAdd0(session, &filter, 0, &filterID)
+		if err != nil {
+			return wrapErr(err)
+		}
+
+		//
+		// #4 Block IPv6 inbound forbid.
+		//
+		displayData, err = createWtFwpmDisplayData0("Block forbid inbound (IPv6)", "")
 		if err != nil {
 			return wrapErr(err)
 		}

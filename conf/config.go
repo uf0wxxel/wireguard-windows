@@ -46,11 +46,14 @@ type Interface struct {
 	DNS        []netip.Addr
 	DNSSearch  []string
 	Bypass     []netip.Prefix
+	Forbid     []netip.Prefix
 	PreUp      string
 	PostUp     string
 	PreDown    string
 	PostDown   string
 	TableOff   bool
+	Restrict   bool
+	BlockDNS   bool
 }
 
 type Peer struct {
@@ -236,6 +239,19 @@ func (conf *Config) DeduplicateNetworkEntries() {
 		i++
 	}
 	conf.Interface.Bypass = conf.Interface.Bypass[:i]
+
+	m = make(map[string]bool, len(conf.Interface.Forbid))
+	i = 0
+	for _, addr := range conf.Interface.Forbid {
+		s := addr.String()
+		if m[s] {
+			continue
+		}
+		m[s] = true
+		conf.Interface.Forbid[i] = addr
+		i++
+	}
+	conf.Interface.Forbid = conf.Interface.Forbid[:i]
 
 	for _, peer := range conf.Peers {
 		m = make(map[string]bool, len(peer.AllowedIPs))
