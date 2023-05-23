@@ -1240,9 +1240,11 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if !ip.IsValid() || ip.Bits() == -1 {
 			return errors.New("invalid bypass address")
 		}
+		maskBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(maskBytes, uint32(ip.Bits()))
 		address := wtFwpV4AddrAndMask{
 			addr: binary.BigEndian.Uint32(ip.Addr().AsSlice()),
-			mask: uint32(ip.Bits()),
+			mask: binary.BigEndian.Uint32(maskBytes),
 		}
 		allowConditionsV4 = append(allowConditionsV4, wtFwpmFilterCondition0{
 			fieldKey:  cFWPM_CONDITION_IP_REMOTE_ADDRESS,
@@ -1291,7 +1293,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 
 	filterID := uint64(0)
 
-	/*if len(allowConditionsV4) > 0 {
+	if len(allowConditionsV4) > 0 {
 		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV4[0]))
 
 		//
@@ -1325,7 +1327,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if err != nil {
 			return wrapErr(err)
 		}
-	}*/
+	}
 
 	filter.numFilterConditions = uint32(len(allowConditionsV6))
 
