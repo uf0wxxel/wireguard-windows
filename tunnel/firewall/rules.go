@@ -1237,6 +1237,9 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if !ip.Addr().Is4() {
 			continue
 		}
+		if !ip.IsValid() || ip.Bits() == -1 {
+			return errors.New("invalid bypass address")
+		}
 		address := wtFwpV4AddrAndMask{
 			addr: binary.BigEndian.Uint32(ip.Addr().AsSlice()),
 			mask: uint32(ip.Bits()),
@@ -1258,6 +1261,9 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if !ip.Addr().Is6() {
 			continue
 		}
+		if !ip.IsValid() || ip.Bits() == -1 {
+			return errors.New("invalid bypass address")
+		}
 		address := wtFwpV6AddrAndMask{
 			addr:         ([16]uint8)(ip.Addr().As16()),
 			prefixLength: uint8(ip.Bits()),
@@ -1278,7 +1284,6 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		subLayerKey:         baseObjects.filters,
 		weight:              filterWeight(weight),
 		numFilterConditions: uint32(len(allowConditionsV4)),
-		filterCondition:     (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV4[0])),
 		action: wtFwpmAction0{
 			_type: cFWP_ACTION_PERMIT,
 		},
@@ -1286,10 +1291,12 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 
 	filterID := uint64(0)
 
-	//
-	// #5 Allow IPv4 outbound Bypass.
-	//
 	if len(allowConditionsV4) > 0 {
+		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV4[0]))
+
+		//
+		// #1 Allow IPv4 outbound Bypass.
+		//
 		displayData, err := createWtFwpmDisplayData0("Allow Bypass outbound (IPv4)", "")
 		if err != nil {
 			return wrapErr(err)
@@ -1302,12 +1309,10 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if err != nil {
 			return wrapErr(err)
 		}
-	}
 
-	//
-	// #6 Allow IPv4 inbound Bypass.
-	//
-	if len(allowConditionsV4) > 0 {
+		//
+		// #2 Allow IPv4 inbound Bypass.
+		//
 		displayData, err := createWtFwpmDisplayData0("Allow Bypass inbound (IPv4)", "")
 		if err != nil {
 			return wrapErr(err)
@@ -1322,13 +1327,14 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		}
 	}
 
-	filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV6[0]))
 	filter.numFilterConditions = uint32(len(allowConditionsV6))
 
-	//
-	// #7 Allow IPv6 outbound Bypass.
-	//
 	if len(allowConditionsV6) > 0 {
+		filter.filterCondition = (*wtFwpmFilterCondition0)(unsafe.Pointer(&allowConditionsV6[0]))
+
+		//
+		// #3 Allow IPv6 outbound Bypass.
+		//
 		displayData, err := createWtFwpmDisplayData0("Allow Bypass outbound (IPv6)", "")
 		if err != nil {
 			return wrapErr(err)
@@ -1341,12 +1347,10 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		if err != nil {
 			return wrapErr(err)
 		}
-	}
 
-	//
-	// #8 Allow IPv6 inbound Bypass.
-	//
-	if len(allowConditionsV6) > 0 {
+		//
+		// #4 Allow IPv6 inbound Bypass.
+		//
 		displayData, err := createWtFwpmDisplayData0("Allow Bypass inbound (IPv6)", "")
 		if err != nil {
 			return wrapErr(err)
