@@ -1313,7 +1313,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		//
 		// #2 Allow IPv4 inbound Bypass.
 		//
-		displayData, err := createWtFwpmDisplayData0("Allow Bypass inbound (IPv4)", "")
+		displayData, err = createWtFwpmDisplayData0("Allow Bypass inbound (IPv4)", "")
 		if err != nil {
 			return wrapErr(err)
 		}
@@ -1351,7 +1351,7 @@ func permitBypass(bypass []netip.Prefix, session uintptr, baseObjects *baseObjec
 		//
 		// #4 Allow IPv6 inbound Bypass.
 		//
-		displayData, err := createWtFwpmDisplayData0("Allow Bypass inbound (IPv6)", "")
+		displayData, err = createWtFwpmDisplayData0("Allow Bypass inbound (IPv6)", "")
 		if err != nil {
 			return wrapErr(err)
 		}
